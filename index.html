@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Unveil — Discipline over Motivation</title>
-<meta name="description" content="규율로 그림을 벗기는 습관 게임. 다짐을 지킬 때마다 그림이 한 조각씩 드러납니다. 로컬 퍼스트 — 계정도, 광고도, 추적도 없음.">
+<meta name="description" content="A habit game that unveils a picture through discipline. Keep your daily pledges and the image is revealed piece by piece. Local-first — no account, no ads, no tracking.">
 <style>
   :root { color-scheme: dark; }
   body {
@@ -14,6 +14,7 @@
     line-height: 1.75; font-size: 15px;
   }
   main { max-width: 680px; margin: 0 auto; }
+  .lang { text-align: right; font-size: 12.5px; margin-bottom: 10px; }
   .brand { color: #E8B84B; font-weight: 700; letter-spacing: 8px; font-size: 30px; }
   .tagline { color: #8A8F9C; font-size: 13px; margin-top: 6px; letter-spacing: 1px; }
   .lead {
@@ -24,12 +25,8 @@
     font-size: 13px; margin: 44px 0 12px; color: #E8B84B;
     letter-spacing: 3px; text-transform: uppercase;
   }
-  .step {
-    display: flex; gap: 14px; margin: 10px 0; align-items: baseline;
-  }
-  .step b.num {
-    color: #E8B84B; font-size: 15px; min-width: 20px; text-align: right;
-  }
+  .step { display: flex; gap: 14px; margin: 10px 0; align-items: baseline; }
+  .step b.num { color: #E8B84B; font-size: 15px; min-width: 20px; text-align: right; }
   .card {
     background: #1C1F28; border: 1px solid #2A2E3A; border-radius: 10px;
     padding: 13px 16px; margin: 8px 0;
@@ -38,7 +35,6 @@
   .card .sub { color: #8A8F9C; font-size: 13px; }
   ul { padding-left: 20px; } li { margin: 6px 0; }
   a { color: #E8B84B; }
-  .quote { color: #8A8F9C; font-style: italic; }
   footer {
     margin-top: 56px; padding-top: 18px; border-top: 1px solid #2A2E3A;
     color: #8A8F9C; font-size: 12.5px; line-height: 2;
@@ -47,58 +43,63 @@
 </head>
 <body>
 <main>
+  <div class="lang"><a href="ko/">한국어</a></div>
   <div class="brand">UNVEIL</div>
-  <div class="tagline">Discipline over Motivation — 규율로 그림을 벗기는 습관 게임</div>
+  <div class="tagline">Discipline over Motivation — a habit game that unveils a picture</div>
 
   <p class="lead">
-    완성하고 싶은 그림 한 장을 걸고, 기간과 하루의 다짐을 계약하세요.<br>
-    다짐을 지킨 날마다 그림을 덮은 조각이 벗겨지고,<br>
-    기간을 완주하면 그림이 완성됩니다.
+    Hang one picture you want to finish, then sign a contract:
+    a duration and your daily pledges.<br>
+    Each day you keep your word, a piece of the cover falls away.<br>
+    Complete the journey, and the picture is yours.
   </p>
 
-  <h2>기획 의도</h2>
+  <h2>Why</h2>
   <p>
-    동기는 변덕스럽고, 규율은 남습니다. Unveil은 응원 문구나 배지 대신
-    <b>스스로와의 계약</b>을 제안합니다. 오늘의 다짐은 등록하는 순간 잠기고,
-    하루가 끝날 때까지 바뀌지 않습니다. 지키지 못한 날에 벌은 없습니다 —
-    조각이 벗겨지지 않고 완성일이 하루 밀릴 뿐, 그림은 언제나 당신을 기다립니다.
+    Motivation is fickle; discipline stays. Instead of cheers and badges,
+    Unveil offers a <b>contract with yourself</b>. Today's pledges lock the
+    moment you register them, and nothing changes them until the day ends.
+    There is no punishment for a failed day — no pieces are revealed and your
+    finish date slips by one, but the picture always waits for you.
   </p>
 
-  <h2>흐름</h2>
-  <div class="step"><b class="num">1</b><span>그림 걸기 — 내 사진 또는 기본 그림(키워드만 보고 고르는 미스터리)</span></div>
-  <div class="step"><b class="num">2</b><span>계약 — 기간(7~365일), 하루 다짐, 리셋 시각, 벗김 방식을 정하고 시작</span></div>
-  <div class="step"><b class="num">3</b><span>매일 아침 — 오늘의 다짐을 등록하고 잠금 (자동 갱신을 켰다면 저절로)</span></div>
-  <div class="step"><b class="num">4</b><span>하루 종일 — 완수할 때마다 체크, 마지막 체크 순간 조각이 촤르륵</span></div>
-  <div class="step"><b class="num">5</b><span>완주 — 마지막 날 피날레, 갤러리 헌액, 여정 전체를 타임랩스로 리플레이</span></div>
+  <h2>How it works</h2>
+  <div class="step"><b class="num">1</b><span>Hang a picture — your own photo, or a built-in artwork chosen by keywords only (a mystery until unveiled)</span></div>
+  <div class="step"><b class="num">2</b><span>Sign the contract — duration (7–365 days), daily pledges, reset hour, reveal mode</span></div>
+  <div class="step"><b class="num">3</b><span>Each morning — register and lock today's pledges (or let auto-renew do it for you)</span></div>
+  <div class="step"><b class="num">4</b><span>Through the day — check off pledges; the last check makes pieces cascade away</span></div>
+  <div class="step"><b class="num">5</b><span>Finish — a finale on the last day, a frame in your gallery, and a timelapse replay of the whole journey</span></div>
 
-  <h2>사용 예시</h2>
-  <div class="card"><b>팔굽혀펴기 100일 챌린지</b><div class="sub">
-    "팔굽혀펴기 100개"를 걸고 숫자 자동 증가 +1을 설정 — 완수한 날마다 101, 102…
-    목표 200에 닿는 날 축하와 함께 고정됩니다. 실패한 날은 난이도가 오르지 않습니다.</div></div>
-  <div class="card"><b>영단어 시험 준비</b><div class="sub">
-    "매일 정하기" 목표로 그날의 컨디션에 맞게 단어 수를 정하고,
-    성공한 날마다 그림이 진행률만큼 극적으로 벗겨집니다 (시네마틱).</div></div>
-  <div class="card"><b>독서·운동·명상 같은 고정 루틴</b><div class="sub">
-    "매일 자동 갱신"을 켜면 한 번 잠근 다짐이 서 있는 계약이 되어
-    앱을 열지 않아도 매일 이어집니다. 수정은 내일부터 — 오늘의 잠금은 불변.</div></div>
+  <h2>In practice</h2>
+  <div class="card"><b>A 100-day push-up challenge</b><div class="sub">
+    Pledge “100 push-ups” and set auto-increase +1 — each completed day it grows
+    to 101, 102… Reaching your target of 200 locks it in with a celebration.
+    Failed days never raise the bar.</div></div>
+  <div class="card"><b>Studying for a vocabulary exam</b><div class="sub">
+    With a “decide daily” goal, choose each day's word count to match your day,
+    while every successful day unveils the picture dramatically by progress (cinematic mode).</div></div>
+  <div class="card"><b>Fixed routines — reading, workouts, meditation</b><div class="sub">
+    Turn on auto-renew and your locked pledges become a standing contract,
+    carried over daily even if you never open the app. Edits apply from
+    tomorrow — today's lock never changes.</div></div>
 
-  <h2>특징</h2>
+  <h2>Principles</h2>
   <ul>
-    <li><b>판정은 정직하게</b> — PERFECT / PARTIAL(딱 하나 모자람, 이틀 연속 불가) / FAILED / SKIPPED</li>
-    <li><b>벌 대신 연기</b> — 실패한 날은 조각 0개, 완성일이 밀릴 뿐 그림 총량은 보존</li>
-    <li><b>로컬 퍼스트</b> — 계정·서버·광고·추적 없음. 인터넷 권한조차 없습니다</li>
-    <li><b>패턴 분석 무료</b> — 골든아워·요일 패턴·다짐별 성공률·월간 리포트 카드, 전부 기기 안에서 계산</li>
-    <li><b>조용한 알림</b> — 미완수·미등록일 때만 울리고, 전부 완수한 날은 침묵</li>
-    <li>활동 잔디 달력 · 기록지(그날의 다짐과 소감) · 완주작 갤러리와 타임랩스 리플레이</li>
+    <li><b>Honest verdicts</b> — PERFECT / PARTIAL (exactly one short, never twice in a row) / FAILED / SKIPPED</li>
+    <li><b>Delay, not punishment</b> — a failed day reveals nothing; the finish date slips, the picture is preserved</li>
+    <li><b>Local-first</b> — no account, no server, no ads, no tracking. Not even the internet permission</li>
+    <li><b>Free analytics</b> — golden hours, weekday patterns, per-pledge success, a shareable monthly report card — all computed on your device</li>
+    <li><b>Quiet notifications</b> — they fire only when something is unfinished; a completed day stays silent</li>
+    <li>Activity calendar · daily logbook with your pledges and journal · gallery with timelapse replays</li>
   </ul>
 
-  <h2>플랫폼</h2>
-  <p>Android (Google Play 등재 준비 중) · Windows 데스크탑 · iOS 예정</p>
+  <h2>Platforms</h2>
+  <p>Android (Google Play listing in preparation) · Windows desktop · iOS planned</p>
 
   <footer>
-    <a href="privacy/">개인정보처리방침 / Privacy Policy</a><br>
+    <a href="privacy/">Privacy Policy / 개인정보처리방침</a><br>
     © 2026 Unveil. All rights reserved.<br>
-    문의 / Contact: kangd1990@gmail.com
+    Contact: kangd1990@gmail.com
   </footer>
 </main>
 </body>
