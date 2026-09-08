@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unveil — Case Study</title>
+<meta name="description" content="How Unveil was designed and built: a habit game where keeping your word unveils a picture. Architecture, rejected alternatives, and the decisions behind them.">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#14161C; --panel:#1C1F28; --panel2:#232733; --line:#2A2E3A;
+    --ink:#D8DAE0; --bright:#F0F1F4; --dim:#8A8F9C; --gold:#E8B84B;
+    --mocha:#191411; --mline:#3B3029; --amber:#EDA63A; --pink:#D96A5B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; padding:40px 20px 80px; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    line-height:1.75; font-size:15px;
+  }
+  main { max-width:760px; margin:0 auto; }
+  .topbar { display:flex; justify-content:space-between; align-items:center;
+            font-size:12.5px; margin-bottom:26px; gap:12px; flex-wrap:wrap; }
+  .topbar a { color:var(--dim); text-decoration:none; }
+  .topbar a:hover { color:var(--gold); }
+  .langbtn { background:var(--panel); border:1px solid var(--line); color:var(--ink);
+             border-radius:999px; padding:5px 14px; font:inherit; font-size:12.5px;
+             cursor:pointer; letter-spacing:.3px; }
+  .langbtn:hover { border-color:var(--gold); color:var(--gold); }
+  .brand { color:var(--gold); font-weight:700; letter-spacing:8px; font-size:30px; }
+  .kicker { color:var(--dim); font-size:12px; letter-spacing:3px;
+            text-transform:uppercase; margin-top:10px; }
+  .lead { margin-top:16px; font-size:19px; line-height:1.6; color:var(--bright); }
+  .meta { margin-top:22px; display:flex; flex-wrap:wrap; gap:8px; }
+  .meta span { background:var(--panel); border:1px solid var(--line); border-radius:6px;
+               padding:4px 11px; font-size:12.5px; color:var(--dim); }
+  h2 { font-size:13px; margin:56px 0 6px; color:var(--gold);
+       letter-spacing:3px; text-transform:uppercase; }
+  h2 .n { color:var(--dim); margin-right:10px; }
+  h3 { font-size:17px; margin:0 0 14px; color:var(--bright); line-height:1.45; font-weight:600; }
+  p { margin:14px 0; }
+  b { color:var(--bright); }
+  blockquote { margin:20px 0; padding:2px 0 2px 18px; border-left:2px solid var(--gold);
+               font-size:17px; color:var(--bright); line-height:1.6; }
+  blockquote .who { display:block; font-size:12.5px; color:var(--dim);
+                    margin-top:8px; letter-spacing:.3px; }
+  .fig { margin:26px 0; background:var(--panel); border:1px solid var(--line);
+         border-radius:12px; padding:20px 18px 14px; overflow-x:auto; }
+  .fig svg { display:block; width:100%; height:auto; }
+  .cap { color:var(--dim); font-size:12.5px; line-height:1.7; margin-top:14px;
+         padding-top:12px; border-top:1px solid var(--line); }
+  ul { padding-left:20px; } li { margin:8px 0; }
+  ol { padding-left:20px; } ol > li { margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:22px 0; font-size:14px; }
+  th, td { text-align:left; vertical-align:top; padding:12px 12px 12px 0;
+           border-bottom:1px solid var(--line); }
+  th { color:var(--gold); font-size:11.5px; letter-spacing:2px;
+       text-transform:uppercase; font-weight:600; padding-bottom:8px; }
+  td:first-child { width:32%; color:var(--bright); font-weight:600; padding-right:20px; }
+  code { background:var(--panel2); border:1px solid var(--line); border-radius:4px;
+         padding:1px 6px; font-size:13px; color:var(--gold);
+         font-family:"SF Mono",Consolas,monospace; }
+  .pull { margin:26px 0; background:var(--panel); border:1px solid var(--line);
+          border-left:2px solid var(--gold); border-radius:0 10px 10px 0;
+          padding:16px 20px; font-size:16px; color:var(--bright); line-height:1.6; }
+  .cols { display:flex; gap:22px; flex-wrap:wrap; margin:0 0 4px; }
+  .cols > div { flex:1 1 260px; }
+  .cols h4 { margin:0 0 8px; font-size:12px; letter-spacing:1.5px;
+             text-transform:uppercase; }
+  .yes h4 { color:var(--gold); } .no h4 { color:var(--pink); }
+  .cols ul { padding-left:18px; margin:0; font-size:14px; }
+  footer { margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+           color:var(--dim); font-size:12.5px; line-height:2; }
+  footer a { color:var(--gold); }
+  @media (max-width:560px) {
+    body { padding:28px 16px 64px; font-size:14.5px; }
+    .lead { font-size:17px; } td:first-child { width:38%; }
+    table, th, td { font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<div class="topbar">
+  <a href="../">&larr; <span data-ko="Unveil 제품 페이지">Unveil product page</span></a>
+  <button class="langbtn" id="lang" type="button">한국어</button>
+</div>
+
+<div class="brand">UNVEIL</div>
+<div class="kicker" data-ko="케이스 스터디">Case study</div>
+<p class="lead" data-ko="자신과의 약속을 지키면 그림이 한 조각씩 벗겨지는 습관 게임. 어떻게 설계하고 만들었는가 — 그리고 무엇을 만들지 <b>않기로</b> 했는가.">
+  A habit game where keeping your word to yourself unveils a picture, one piece
+  at a time. How it was designed and built — and what I decided <b>not</b> to build.
+</p>
+<div class="meta">
+  <span data-ko="1인 개발">Solo project</span>
+  <span>Flutter · Dart · SQLite</span>
+  <span data-ko="2026년 7월 ~ 9월">Jul – Sep 2026</span>
+  <span data-ko="Android · Windows · iOS 진행 중">Android · Windows · iOS in progress</span>
+</div>
+
+<h2><span class="n">01</span><span data-ko="2세대를 시작하게 한 질문">The question</span></h2>
+<h3 data-ko="앱을 여는 것이 안 여는 것보다 나아야 한다">
+  Opening the app has to be worth more than not opening it
+</h3>
+<blockquote data-ko="&ldquo;앱을 누르는 행동이 안 누르는 행동보다 인센티브가 있어야 한다.&rdquo;<span class='who'>— 멘토링 대화, 2026년 8월</span>">
+  &ldquo;Opening the app has to carry more incentive than not opening it.&rdquo;
+  <span class="who">— a mentoring conversation, August 2026</span>
+</blockquote>
+<p data-ko="습관 앱 대부분은 이 질문에 <b>압박</b>으로 답한다. 스트릭 불꽃, 죄책감을 자극하는 알림, 실패를 전시하는 위젯. 나는 그걸 만들고 싶지 않았다 — 내가 지운 앱들은 기능이 부족해서가 아니라 <b>앱이 나를 관리하고 있다는 게 느껴져서</b> 지웠다.">
+  Most habit apps answer this with <b>pressure</b> — streak flames, guilt
+  notifications, a widget that displays your failure. I did not want to build
+  that. The apps I have deleted, I deleted because I could feel them
+  <b>managing me</b>.
+</p>
+<p data-ko="그래서 다른 답을 찾았고, 그건 기능이 아니라 정의였다:">
+  So I looked for a different answer, and what I found was not a feature but a
+  definition:
+</p>
+<div class="pull" data-ko="Unveil은 <b>피드백이 없는 행동에 피드백을 준다.</b>">
+  Unveil gives feedback to <b>behavior that has none.</b>
+</div>
+<p data-ko="팔굽혀펴기는 몇 주 동안 아무것도 보여주지 않는다. 스무 쪽을 읽어도 흔적이 남지 않는다. 작은 약속을 지킨 보상은 눈에 보이지 않고, 그래서 더 시끄러운 것들에게 매번 진다. Unveil은 그걸 보이게 만든다 — 내가 고른 그림이, 내가 했기 때문에, 조금 벗겨진다.">
+  Push-ups show nothing for weeks. Twenty pages of reading leave no trace. The
+  reward for keeping a small promise is invisible, so the promise loses to
+  whatever is louder. Unveil makes it visible: a picture you chose comes apart,
+  a little, because you did the thing.
+</p>
+<p data-ko="이 한 문장이 나머지를 전부 결정했다. <b>앱이 사용자를 붙잡기 위해 감정을 만들어내야 한다면, 그건 이미 실패한 것이다.</b>">
+  That sentence decided everything after it: <b>if the app has to manufacture a
+  feeling to keep you, it has already failed.</b>
+</p>
+
+<h2><span class="n">02</span><span data-ko="모든 것이 올라앉은 결정">The decision everything rests on</span></h2>
+<h3 data-ko="그림을 조각내지 않는다">Do not slice the image</h3>
+<p data-ko="당연한 구현은 그림을 N조각으로 잘라 하나씩 보여주는 것이다. 나는 아무것도 자르지 않았다. 원본은 그대로 있고, 앱은 그 <b>위에 덮개를 그릴 뿐</b>이다. 진행 상태는 값 두 개로 끝난다.">
+  The obvious build is to cut the picture into N tiles and reveal them one by
+  one. I cut nothing. The image stays whole and untouched; the app draws a
+  <b>cover</b> over it. Progress is exactly two values.
+</p>
+
+<div class="fig">
+  <svg viewBox="0 0 700 230" role="img" aria-label="Architecture: source image, cover tiles, and two values">
+    <defs>
+      <linearGradient id="pic" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3E4A63"/><stop offset="1" stop-color="#1F2734"/>
+      </linearGradient>
+      <linearGradient id="picb" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#5B6C93"/><stop offset="1" stop-color="#2B3547"/>
+      </linearGradient>
+      <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="#5A6070"/>
+      </marker>
+    </defs>
+    <g font-family="-apple-system,Segoe UI,sans-serif">
+      <rect x="14" y="40" width="150" height="112" rx="5" fill="url(#pic)" stroke="#2A2E3A"/>
+      <circle cx="128" cy="70" r="13" fill="#E8B84B" opacity=".55"/>
+      <path d="M14 134 L60 94 L92 122 L120 102 L164 139 L164 152 L14 152 Z" fill="#141821" opacity=".8"/>
+      <text x="14" y="28" fill="#F0F1F4" font-size="13" font-weight="600" data-ko="원본 이미지">Source image</text>
+      <text x="14" y="174" fill="#8A8F9C" font-size="11.5" data-ko="한 번도 변형되지 않는다">never modified</text>
+      <text x="14" y="191" fill="#8A8F9C" font-size="11.5" data-ko="자르지 않는다 · 재인코딩 없음">no slicing, no re-encode</text>
+
+      <rect x="240" y="40" width="150" height="112" rx="5" fill="url(#pic)" stroke="#2A2E3A"/>
+      <circle cx="354" cy="70" r="13" fill="#E8B84B" opacity=".55"/>
+      <path d="M240 134 L286 94 L318 122 L346 102 L390 139 L390 152 L240 152 Z" fill="#141821" opacity=".8"/>
+      <g id="coverGrid"></g>
+      <text x="240" y="28" fill="#F0F1F4" font-size="13" font-weight="600" data-ko="덮개 조각">Cover tiles</text>
+      <text x="240" y="174" fill="#8A8F9C" font-size="11.5" data-ko="위에 그려질 뿐이다">drawn on top, nothing else</text>
+
+      <rect x="466" y="40" width="220" height="50" rx="7" fill="#232733" stroke="#2A2E3A"/>
+      <text x="480" y="62" fill="#E8B84B" font-size="12.5" font-family="Consolas,monospace">revealOrder</text>
+      <text x="480" y="80" fill="#8A8F9C" font-size="11.5" data-ko="생성 시 1회 계산 → DB에 박제">a permutation, frozen at creation</text>
+
+      <rect x="466" y="102" width="220" height="50" rx="7" fill="#232733" stroke="#2A2E3A"/>
+      <text x="480" y="124" fill="#E8B84B" font-size="12.5" font-family="Consolas,monospace">revealedCount</text>
+      <text x="480" y="142" fill="#8A8F9C" font-size="11.5" data-ko="그 순열을 가리키는 커서 하나">a single cursor into it</text>
+
+      <line x1="172" y1="96" x2="232" y2="96" stroke="#5A6070" stroke-width="1.2" marker-end="url(#ar)"/>
+      <line x1="398" y1="96" x2="458" y2="96" stroke="#5A6070" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <text x="466" y="174" fill="#8A8F9C" font-size="11.5" data-ko="이 둘이 시각적 상태의 전부다">these two are the entire visual state</text>
+      <text x="466" y="191" fill="#8A8F9C" font-size="11.5" data-ko="어느 기기에서든 언제든 재현된다">reproducible on any device, any time</text>
+    </g>
+  </svg>
+  <div class="cap" data-ko="<b>순열을 얼려두는 것</b>이 자르지 않는 것만큼 중요하다. 생성 시 한 번만 쓰이기 때문에 같은 목표는 영원히 같은 순서로 벗겨진다 — 다시보기에서도, 백업에서 복원한 뒤에도, 다른 기기에서도.">
+    <b>Freezing the permutation</b> matters as much as not slicing. Because it is
+    written once, the same goal unveils in the same order forever — on replay,
+    after a restore from backup, on another device.
+  </div>
+</div>
+
+<p data-ko="이 선택 덕분에 이후 모든 확장이 싸졌다. 수백 조각을 퍼센트 일정으로 걷어내는 <b>시네마틱 모드</b>, 완주 후 여정 전체를 되감는 <b>리플레이</b>, 목표를 만든 순간 몇 조각을 미리 열어주는 <b>헤드스타트</b>, 84%에서 멈춘 그림을 그대로 액자에 거는 <b>부분 완주 보관</b> — 전부 &ldquo;오늘 몇 조각인가&rdquo;에 답하는 함수 하나씩이었다. 이미지 파이프라인도, 재인코딩도, 목표마다 생기는 파생 에셋도 없다.">
+  Everything after it got cheap. <b>Cinematic reveal</b> (hundreds of pieces on a
+  percentage schedule), the end-of-journey <b>replay</b>, the <b>head start</b>
+  that opens a few pieces the moment you commit, the <b>partial-win archive</b>
+  that freezes a picture at 84% — each one is a function answering
+  &ldquo;how many pieces today?&rdquo; No image pipeline, no re-encoding, no
+  per-goal derived assets.
+</p>
+
+<h2><span class="n">03</span><span data-ko="실패는 벌이 아니라 연기다">Failure is delay, not punishment</span></h2>
+<h3 data-ko="앱은 사용자가 벌어놓은 것을 절대 되가져가지 않는다">
+  The app never takes back what you earned
+</h3>
+<p data-ko="놓친 날은 아무것도 벗겨지지 않고 완주일이 하루 밀린다. 이미 벗겨진 조각을 <b>도로 덮지는 않는다.</b>">
+  A missed day reveals nothing and pushes the finish date back by one. It
+  <b>never takes pieces away.</b>
+</p>
+
+<div class="fig">
+  <svg viewBox="0 0 700 180" role="img" aria-label="Day strip: verdicts and a sliding finish date">
+    <g font-family="-apple-system,Segoe UI,sans-serif">
+      <text x="0" y="16" fill="#F0F1F4" font-size="13" font-weight="600" data-ko="30일 목표에서의 하루하루">Day by day, on a 30-day goal</text>
+      <g id="dayStrip"></g>
+      <g transform="translate(0,132)">
+        <rect x="0" y="0" width="11" height="11" rx="2" fill="#EDA63A"/>
+        <text x="18" y="10" fill="#8A8F9C" font-size="11.5">PERFECT</text>
+        <rect x="96" y="0" width="11" height="11" rx="2" fill="#EDA63A" opacity=".42"/>
+        <text x="114" y="10" fill="#8A8F9C" font-size="11.5" data-ko="PARTIAL — 정확히 하나 부족, 연속 두 번은 없다">PARTIAL — exactly one short, never twice running</text>
+        <rect x="0" y="24" width="11" height="11" rx="2" fill="#1F232C" stroke="#3A4050"/>
+        <text x="18" y="34" fill="#8A8F9C" font-size="11.5" data-ko="FAILED — 아무것도 벗겨지지 않는다. 그리고 아무것도 빼앗기지 않는다">FAILED — nothing is revealed, and nothing is taken away</text>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<p data-ko="이건 제품 전체가 매달려 있는 규칙이다. <b>벌어놓은 것을 되가져갈 수 있는 앱은 복종을 요구하게 된다. 기다리기만 하는 앱에는 돌아올 수 있다.</b> 계약 방식 세 가지가 그 위에 올라간다 — <b>기본</b>(놓치면 하루 밀림), <b>여유</b>(실패라는 판정 자체가 없음), <b>마감</b>(끝나는 날이 고정. 80% 이상이면 가짜 트로피 대신 <b>정직한 부분 완주</b>로 액자에 걸린다).">
+  This is the rule the whole product hangs on. <b>An app that can take back what
+  you earned has to be obeyed. An app that only ever waits can be returned
+  to.</b> Three contract modes sit on top of it — <b>Standard</b> (a miss costs a
+  day), <b>Relaxed</b> (no failure at all), <b>Deadline</b> (a fixed end date;
+  finish 80% or more and it is framed as an <b>honest partial win</b> rather
+  than a fake trophy).
+</p>
+<p data-ko="판정 문구는 일부러 듣기 좋게 만들지 않았다 — PERFECT / PARTIAL / FAILED / SKIPPED. <b>말투는 부드럽게, 기록은 정직하게.</b> 이 둘은 서로 다른 문제다.">
+  The verdicts are deliberately unflattering — PERFECT / PARTIAL / FAILED /
+  SKIPPED. <b>The tone should be gentle; the record should not be.</b> Those are
+  two different problems.
+</p>
+
+<h2><span class="n">04</span><span data-ko="약속을 지키는 것은 문장이 아니라 테스트다">The promise is a test, not a sentence</span></h2>
+<h3 data-ko="공개된 약속을 뒤집어야 했을 때">When a public promise had to be reversed</h3>
+<p data-ko="1세대는 스토어 페이지에 <b>&ldquo;추적 없음&rdquo;</b>이라고 적고, 인터넷 권한조차 없이 출시했다. 2세대는 데이터가 필요했다. 이미 밖에 나가 있는 약속을 뒤집는 일 — 보통은 방침 문서에서 문단 하나를 고쳐 넣고 끝내는 부분이다.">
+  Generation 1 shipped with <b>&ldquo;no tracking&rdquo;</b> on the store page
+  and no internet permission at all. Generation 2 needed data. Reversing a
+  promise that is already public is the part most projects handle by editing a
+  paragraph in a policy document.
+</p>
+<p data-ko="세 가지로 처리했다.">I handled it three ways.</p>
+<ol>
+  <li data-ko="<b>모드 3종, 기능은 완전히 동일하다.</b> Personal은 아무것도 보내지 않고, Core와 Full은 더 보낸다. 어느 것도 다른 모드에 없는 기능을 열어주지 않는다 — 기능과 교환된 동의는 GDPR 제7조 4항의 &lsquo;자유롭게 주어진&rsquo; 동의가 아니고, 애초에 그 구조가 이 제품이 거부하려고 존재하는 바로 그 압박이다.">
+    <b>Three modes, identical features.</b> Personal sends nothing; Core and Full
+    send more. None of them unlocks a feature the others lack — consent traded
+    for functionality is not <i>freely given</i> under GDPR Art. 7(4), and
+    gating on it is precisely the coercion this product exists to reject.
+  </li>
+  <li data-ko="<b>형태만 나가고, 내용은 절대 나가지 않는다.</b> 아래가 그 경계 전부다.">
+    <b>Shape leaves; content never does.</b> The split below is the whole
+    contract.
+  </li>
+  <li data-ko="<b>그 목록은 실행된다.</b> <code>plan(mode, allowed)</code>이 페이로드에 무엇이 들어갈 수 있는지에 대한 단일 진실이고, <code>data_consent_test</code>는 금지된 필드가 하나라도 들어가면 <b>빌드를 깬다</b>. 약속이 &lsquo;내가 그렇게 약속했다는 기억&rsquo;에 의존하지 않는다.">
+    <b>The list is executable.</b> <code>plan(mode, allowed)</code> is the single
+    source of truth for what a payload may contain, and
+    <code>data_consent_test</code> <b>fails the build</b> if a forbidden field
+    ever enters one. The promise does not depend on my memory of having made it.
+  </li>
+</ol>
+
+<div class="fig">
+  <div class="cols">
+    <div class="yes">
+      <h4 data-ko="나갈 수 있는 것 — 형태">May leave — shape</h4>
+      <ul>
+        <li data-ko="오늘 성공했는가">whether the day succeeded</li>
+        <li data-ko="다짐 개수 · 계약 방식 · 기간">pledge count, contract mode, duration</li>
+        <li data-ko="마지막 이후 비어 있던 날 수">days since the last one</li>
+        <li data-ko="메모를 썼는가, 몇 번 고쳤는가">whether a note was used, and how often edited</li>
+        <li data-ko="편지를 열어봤는가 / 그냥 넘겼는가">whether the letter was opened or skipped</li>
+      </ul>
+    </div>
+    <div class="no">
+      <h4 data-ko="어떤 모드에서도 나가지 않는 것 — 내용">Never leaves, in any mode — content</h4>
+      <ul>
+        <li data-ko="목표 제목 · 다짐 문구">the goal title, the pledge text</li>
+        <li data-ko="기록지 · 편지 · 자유 메모">the journal, the letter, the free note</li>
+        <li data-ko="그림 · 파일명 · 어떤 형태의 이미지 데이터도">the picture, its filename, any image data</li>
+        <li data-ko="정확한 날짜 · 기기 식별자 · IP">exact dates, device identifiers, IP</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cap" data-ko="IP는 저장하지 않는다. 악용 탐지가 필요해지면 7일마다 바뀌는 솔트 해시로만 하고, 분석 데이터와는 절대 조인하지 않는다. 설치 식별자는 첫 전송보다 <b>먼저</b> 만들어졌다 — 지울 수 있다고 방침에 쓰려면 지울 대상이 먼저 있어야 한다.">
+    IP is not stored. If abuse detection is ever needed it runs on a
+    seven-day rotating-salt hash, never joined to analytics. The install
+    identifier was built <b>before</b> the first transmission — you cannot
+    promise deletion of something that does not exist yet.
+  </div>
+</div>
+
+<h2><span class="n">05</span><span data-ko="만들지 않기로 한 것들">What I chose not to build</span></h2>
+<h3 data-ko="기각한 목록이 출시한 목록보다 제품을 더 잘 설명한다">
+  The rejected list says more about a product than the shipped one
+</h3>
+<table>
+  <thead><tr>
+    <th data-ko="기각">Rejected</th>
+    <th data-ko="이유">Why</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td data-ko="구독">Subscription</td>
+      <td data-ko="인사이트가 곧 리텐션 엔진이다. 그걸 잠그면 앱은 <b>과금하기 위해 사용자를 붙잡아야</b> 하고, 그 순간부터 모든 설계 질문의 답이 틀어진다. 전부 무료로.">
+        Insights <i>are</i> the retention engine. Locking them means the app has
+        to <b>keep you in order to bill you</b>, and from then on every design
+        question gets answered wrong. All free.
+      </td>
+    </tr>
+    <tr>
+      <td data-ko="서버 방식 선물하기">Server-side gifting</td>
+      <td data-ko="우아한 구현은 해시 + 서버다. 그러면 앱이 <b>UGC 플랫폼</b>이 된다 — 모더레이션 의무, 악용 벡터, 그리고 방금 만들지 않겠다고 약속한 추적 표면. 선물은 파일로 나가고 사용자가 쓰던 메신저로 보낸다. 신뢰는 두 사람 사이에 있지, 나를 경유하지 않는다.">
+        The elegant version is a hash and a server. That turns the app into a
+        <b>UGC platform</b> — moderation duty, abuse vectors, and a tracking
+        surface I had just promised not to build. Gifts ship as a file sent
+        through the user's own messenger: the trust sits between two people,
+        not routed through me.
+      </td>
+    </tr>
+    <tr>
+      <td data-ko="주간 · 월간 판정">Weekly / monthly judgment</td>
+      <td data-ko="더 관대하고, 그리고 다른 제품이다. 매일이 정체성이다.">
+        Kinder — and a different product. Daily <i>is</i> the identity.
+      </td>
+    </tr>
+    <tr>
+      <td data-ko="Firebase / GA4">Firebase / GA4</td>
+      <td data-ko="스토어 페이지와 정면으로 모순된다. 대신 옵트인 통계와 피드백 폼으로 가시성을 확보했다.">
+        Would have contradicted the store page outright. Visibility came from
+        opt-in stats and a feedback form instead.
+      </td>
+    </tr>
+    <tr>
+      <td data-ko="상한 확장 판매">Selling higher limits</td>
+      <td data-ko="목표 5개와 다짐 10개는 페이월이 아니라 <b>메시지</b>다.">
+        Five goals and ten pledges are not a paywall, they are the
+        <b>message</b>.
+      </td>
+    </tr>
+    <tr>
+      <td data-ko="수호령 — 동행하는 캐릭터">A guardian companion</td>
+      <td data-ko="만들었다. 말하지 않는 상태 함수, 네 가지 상태, 문양을 누르면 나타남. 그리고 걷어냈다. <b>자기 자신에게 쓰는 타임캡슐 편지가 같은 일을 더 잘한다</b> — 흔들릴 때 곁에 오는 목소리가 앱이 만들어낸 캐릭터가 아니라 <b>사용자 자신</b>이 된다. 그리고 그건 앱에서 유일하게 인격이 있는 것이었고, 그래서 가장 Unveil답지 않았다.">
+        I built it — a silent state function, four moods, appears when the mark
+        is tapped. Then I removed it. <b>A timecapsule letter you write to
+        yourself does the same job better</b>: when you drift, the voice that
+        meets you is <b>your own</b>, not a character the app invented. It was
+        also the one thing in the app with a personality, which made it the
+        least Unveil-like thing in it.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2><span class="n">06</span><span data-ko="내가 틀렸던 것들">Where I was wrong</span></h2>
+<ul>
+  <li data-ko="카운터 사용 기록을 남기지 말라고 추천했다. 두 결정 — &lsquo;기록하지 말자&rsquo;와 &lsquo;스키마를 건드리지 말자&rsquo; — 을 나도 모르게 하나로 묶어서 말한 것이었다. 분리하면 답이 뒤집힌다: <b>기록하지 않은 데이터는 영영 없어지고, 마이그레이션은 그냥 화요일에 하면 된다.</b>">
+    I recommended <b>not recording</b> counter usage — having silently merged two
+    decisions, &ldquo;don't record&rdquo; and &ldquo;don't touch the
+    schema.&rdquo; Separated, the answer flips: <b>unrecorded data is gone
+    forever; a migration is a Tuesday.</b>
+  </li>
+  <li data-ko="그림에 더 무거운 의미를 부여하자고 밀었다. 무거운 의미는 놓친 하루를 <b>배신</b>으로 만들고, 그건 이 설계 전체가 딛고 선 용서와 정면으로 싸운다.">
+    I pushed for the picture to carry <b>heavier meaning</b>. Heavy meaning turns
+    a missed day into a <b>betrayal</b>, which fights the forgiveness the entire
+    design stands on.
+  </li>
+  <li data-ko="서버 리전을 규제 대응 수단으로 과대평가했다. 진짜로 익명인 데이터는 애초에 그 규정 밖이다.">
+    I over-weighted <b>server region</b> as a compliance lever. Genuinely
+    anonymous data is outside those rules to begin with.
+  </li>
+  <li data-ko="이탈한 사용자가 언제 돌아올 확률이 가장 높은지 연구를 찾아봤고, 인용할 만한 게 없었다. 3일이라는 트리거는 <b>판단</b>이고, 발견인 척하지 않고 판단이라고 문서에 적어뒀다.">
+    I looked for research on when a lapsed user is most likely to return and
+    found nothing worth citing. The three-day trigger is a <b>judgment call</b>,
+    and it is documented as one rather than dressed up as a finding.
+  </li>
+</ul>
+
+<h2><span class="n">07</span><span data-ko="어떻게 생겼나">What it looks like</span></h2>
+<div class="fig">
+  <svg viewBox="0 0 700 300" role="img" aria-label="Mockup: the hub screen and a goal screen">
+    <g font-family="-apple-system,Segoe UI,sans-serif">
+      <rect x="52" y="8" width="176" height="284" rx="20" fill="#191411" stroke="#3B3029" stroke-width="1.5"/>
+      <text x="70" y="38" fill="#979289" font-size="8.5" letter-spacing="2">TODAY</text>
+      <g id="markGrid" transform="translate(70,48)"></g>
+      <text x="70" y="86" fill="#979289" font-size="8.5" data-ko="61조각 중 38">38 of 61 pieces</text>
+      <g id="pledgeRows"></g>
+      <text x="70" y="276" fill="#979289" font-size="8" letter-spacing="1" data-ko="허브 — 오늘 할 것 전부">HUB — everything due today</text>
+
+      <rect x="472" y="8" width="176" height="284" rx="20" fill="#191411" stroke="#3B3029" stroke-width="1.5"/>
+      <!-- the sealed letter, drawn first so the picture tucks it away -->
+      <path d="M596 96 L646 96 L646 140 L596 140 Z" fill="#2D2520" stroke="#3B3029"/>
+      <path d="M596 96 L621 112 L646 96" fill="none" stroke="#3B3029"/>
+      <rect x="490" y="30" width="140" height="105" rx="4" fill="url(#picb)"/>
+      <circle cx="604" cy="56" r="11" fill="#F3C86A" opacity=".8"/>
+      <path d="M490 122 L524 92 L549 114 L570 98 L630 132 L630 135 L490 135 Z" fill="#1B2230" opacity=".9"/>
+      <g id="tileGrid" transform="translate(490,30)"></g>
+      <text x="490" y="184" fill="#EAE7DE" font-size="10.5" font-weight="600" data-ko="100일 · 시네마틱">100 days · cinematic</text>
+      <rect x="490" y="194" width="140" height="4" rx="2" fill="#2D2520"/>
+      <rect x="490" y="194" width="89" height="4" rx="2" fill="#EDA63A"/>
+      <text x="490" y="212" fill="#979289" font-size="8.5" data-ko="63일차 · 428 / 675 조각">day 63 · 428 / 675 pieces</text>
+      <g id="miniCal" transform="translate(490,224)"></g>
+      <text x="490" y="276" fill="#979289" font-size="8" letter-spacing="1" data-ko="목표 — 계약은 여기서 잠근다">GOAL — the contract locks here</text>
+
+      <text x="266" y="126" fill="#8A8F9C" font-size="11.5" data-ko="오늘의 마지막 체크를 누르면">The last check of the day</text>
+      <text x="266" y="145" fill="#8A8F9C" font-size="11.5" data-ko="조각이 무너져 내린다">makes pieces cascade away</text>
+      <line x1="266" y1="163" x2="452" y2="163" stroke="#3B3029" stroke-width="1" marker-end="url(#ar)"/>
+      <text x="266" y="196" fill="#979289" font-size="10.5" data-ko="봉투 = 시작할 때 자신에게 쓴 편지.">The envelope is the letter you</text>
+      <text x="266" y="212" fill="#979289" font-size="10.5" data-ko="완주할 때까지 그림 뒤에 봉인돼 있다.">wrote yourself on day one, sealed</text>
+      <text x="266" y="228" fill="#979289" font-size="10.5" data-ko="&nbsp;">behind the picture until you finish</text>
+    </g>
+  </svg>
+  <div class="cap" data-ko="왼쪽: 허브. <b>UNVEIL이라는 이름 자체가 61조각짜리 진행 막대다</b> — 오늘의 완수만큼 앰버로 채워지고, 마지막 하나에서 이름 전체가 한 번 번쩍인다. 앱의 아이디어가 앱의 이름 안에 들어 있다.">
+    Left: the hub. <b>The name UNVEIL is itself the progress bar</b> — 61 pieces
+    filled with amber by today's completions, the last one making the whole word
+    flash. The idea of the app, inside the name of the app.
+  </div>
+</div>
+
+<h2><span class="n">08</span><span data-ko="엔지니어링 노트">Engineering notes</span></h2>
+<ul>
+  <li data-ko="<b>Flutter / Dart</b>, Riverpod, drift (SQLite), 직접 만든 로컬라이제이션 (한국어 / 영어). 애니메이션은 CustomPaint + Ticker.">
+    <b>Flutter / Dart</b>, Riverpod, drift (SQLite), a self-built localization
+    layer (Korean / English). Animation is CustomPaint plus Tickers.
+  </li>
+  <li data-ko="<b>스키마 마이그레이션 15회, 파괴적인 것은 하나도 없다.</b> 스키마 v2 시절부터 같은 설치본으로 계속 도그푸딩해왔다 — 실기기에서 살아남지 못하는 마이그레이션은 마이그레이션이 아니다.">
+    <b>Fifteen schema migrations, none destructive.</b> The same install has been
+    dogfooded continuously since schema v2 — a migration that cannot survive a
+    real device is not a migration.
+  </li>
+  <li data-ko="도메인 로직(판정 · 벗김량 · 리듬 · 수집 계약)은 순수 함수로 분리돼 있고, 테스트가 걸린 층은 여기다. 84개 테스트가 규칙을 <b>정책이 아니라 코드로</b> 붙잡는다.">
+    Domain logic (verdicts, reveal amounts, rhythm, the consent contract) is
+    pure and is the layer under test. 84 tests hold the rules <b>in code rather
+    than in policy</b>.
+  </li>
+  <li data-ko="모든 변경마다: analyze → test → 릴리즈 빌드 → 실제로 실행. 빌드가 통과했다는 것만으로 &ldquo;돌아간다&rdquo;고 말하지 않는다.">
+    Every change: analyze → test → release build → actually run it. A passing
+    build is not a claim that it works.
+  </li>
+  <li data-ko="기억해둘 만한 버그 둘: 설정 비동기 로드 레이스 때문에 언락 축하가 <b>매 실행마다</b> 반복됐고, 두 개의 캐치업 경로가 경합해 다짐이 <b>두 번</b> 등록됐다. 둘 다 가드를 <b>추가</b>해서가 아니라 동시성을 <b>제거</b>해서 고쳤다.">
+    Two bugs worth remembering: a settings load race that replayed an unlock
+    celebration on <b>every launch</b>, and a double-registration race between
+    two catch-up paths. Both were fixed by <b>removing concurrency</b>, not by
+    adding guards.
+  </li>
+  <li data-ko="기본이 로컬이다 — 계정 없음, 1세대는 인터넷 권한 없이 출시. 백업은 사용자가 들고 나갈 수 있는 zip이고, 설치 식별자는 일부러 그 zip 밖에 둔다.">
+    Local-first by default — no account, and generation 1 shipped without the
+    internet permission. Backup is a zip the user carries out, and the install
+    identifier is deliberately stored outside it.
+  </li>
+</ul>
+
+<h2><span class="n">09</span><span data-ko="현재 상태">Status</span></h2>
+<p data-ko="<b>1세대 (v1.1.0)</b>는 완성돼 아카이브됐다 — 코어 루프, 갤러리, 인사이트, 활동 달력, 선물하기, 한/영, Android + Windows. <b>2세대</b>는 개발 중이고, 다음은 Google Play 비공개 테스트다.">
+  <b>Generation 1 (v1.1.0)</b> is complete and archived — core loop, gallery,
+  insights, activity calendar, gifting, Korean/English, Android and Windows.
+  <b>Generation 2</b> is in development; Google Play closed testing is next.
+</p>
+<p data-ko="소스는 비공개 저장소에 있다. 코드를 함께 보면서 이야기하는 건 언제든 환영이다.">
+  The source lives in a private repository. I am happy to walk through it.
+</p>
+
+<footer>
+  <a href="../" data-ko="제품 페이지">Product page</a> ·
+  <a href="../privacy/">Privacy policy / 개인정보처리방침</a> ·
+  <a href="../v1/" data-ko="1세대 아카이브">Generation 1 archive</a><br>
+  &copy; 2026 Unveil. Contact: kangd1990@gmail.com
+</footer>
+
+</main>
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var ko = false;
+
+  function rect(parent, x, y, w, h, fill, rx, op) {
+    var r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', x); r.setAttribute('y', y);
+    r.setAttribute('width', w); r.setAttribute('height', h);
+    r.setAttribute('rx', rx === undefined ? 1 : rx);
+    r.setAttribute('fill', fill);
+    if (op !== undefined) r.setAttribute('opacity', op);
+    parent.appendChild(r);
+    return r;
+  }
+  function label(parent, x, y, size, fill, en, kotext) {
+    var t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('font-size', size); t.setAttribute('fill', fill);
+    if (kotext) t.setAttribute('data-ko', kotext);
+    t.textContent = en;
+    parent.appendChild(t);
+    return t;
+  }
+  // diagonal order, the same feel as the app's reveal wave
+  function diagonal(rows, cols) {
+    var cells = [];
+    for (var r = 0; r < rows; r++)
+      for (var c = 0; c < cols; c++) cells.push([r, c]);
+    cells.sort(function (a, b) {
+      return (a[1] + (rows - 1 - a[0])) - (b[1] + (rows - 1 - b[0]));
+    });
+    return cells;
+  }
+
+  // fig 1 — cover tiles, about 45 percent lifted
+  var cg = document.getElementById('coverGrid');
+  if (cg) {
+    var CW = 150, CH = 112, cw = CW / 10, ch = CH / 8;
+    var cells = diagonal(8, 10);
+    cells.forEach(function (cell, i) {
+      // lifted tiles are simply not drawn — the picture beneath shows through
+      if (i < Math.round(cells.length * 0.45)) return;
+      rect(cg, 240 + cell[1] * cw + 0.5, 40 + cell[0] * ch + 0.5,
+           cw - 1, ch - 1, '#232733', 1, 0.97);
+    });
+  }
+
+  // mockup — the same cover, over a picture, 63 percent revealed
+  var tg = document.getElementById('tileGrid');
+  if (tg) {
+    var tw = 140 / 14, th = 105 / 11;
+    diagonal(11, 14).forEach(function (cell, i, arr) {
+      if (i < Math.round(arr.length * 0.63)) return;
+      rect(tg, cell[1] * tw, cell[0] * th, tw - 0.4, th - 0.4, '#191411', 0.5, 0.95);
+    });
+  }
+
+  // fig 2 — a month of days, three of them failed, and the finish sliding by three
+  var ds = document.getElementById('dayStrip');
+  if (ds) {
+    var days = 'PPPpPPFPPPPpPPPFFPPPPPpPPPPPPP'.split('');
+    var bw = 17, gap = 3.4, step = bw + gap, x0 = 2;
+    days.forEach(function (d, i) {
+      var r = rect(ds, x0 + i * step, 30, bw, 32,
+                   d === 'F' ? '#1F232C' : '#EDA63A', 2, d === 'p' ? 0.42 : 1);
+      if (d === 'F') r.setAttribute('stroke', '#3A4050');
+    });
+    // the three days the misses pushed the finish out by
+    var end = x0 + days.length * step;
+    for (var j = 0; j < 3; j++) {
+      var g = rect(ds, end + j * step, 30, bw, 32, 'none', 2);
+      g.setAttribute('stroke', '#EDA63A');
+      g.setAttribute('stroke-dasharray', '3 3');
+      g.setAttribute('opacity', '0.5');
+    }
+    var t1 = label(ds, end + 3 * step + 8, 51, 11.5, '#E8B84B', '+3', '+3');
+    t1.setAttribute('font-weight', '600');
+    label(ds, x0, 82, 11.5, '#8A8F9C',
+      'day 30 was the finish; three misses moved it to day 33',
+      '원래 완주일은 30일차 — 세 번 놓쳐서 33일차로 밀렸다');
+    label(ds, x0, 100, 11.5, '#8A8F9C',
+      'the total never changes, and nothing already revealed is covered again',
+      '총량은 변하지 않고, 이미 벗겨진 조각이 다시 덮이지도 않는다');
+  }
+
+  // mockup — the real 61-piece UNVEIL wordmark, drawn from the app's glyphs
+  var mg = document.getElementById('markGrid');
+  if (mg) {
+    var glyphs = [
+      ['#..#', '#..#', '#..#', '#..#', '.##.'],
+      ['#..#', '##.#', '#.##', '#..#', '#..#'],
+      ['#...#', '#...#', '#...#', '.#.#.', '..#..'],
+      ['####', '#...', '###.', '#...', '####'],
+      ['###', '.#.', '.#.', '.#.', '###'],
+      ['#...', '#...', '#...', '#...', '####']
+    ];
+    var grid = ['', '', '', '', ''];
+    for (var g = 0; g < glyphs.length; g++)
+      for (var rr = 0; rr < 5; rr++)
+        grid[rr] += (g === 0 ? '' : '.') + glyphs[g][rr];
+    var GC = grid[0].length, order = [];
+    for (var r2 = 0; r2 < 5; r2++)
+      for (var c2 = 0; c2 < GC; c2++)
+        if (grid[r2][c2] === '#') order.push([r2, c2]);
+    order.sort(function (a, b) {
+      var ka = a[1] + (4 - a[0]), kb = b[1] + (4 - b[0]);
+      return ka !== kb ? ka - kb : b[0] - a[0];
+    });
+    var u = 4.7;
+    order.forEach(function (cell, i) {
+      rect(mg, cell[1] * u, cell[0] * u, u - 0.9, u - 0.9,
+           i < 38 ? '#EDA63A' : '#2D2520', 0.6);
+    });
+  }
+
+  // mockup — today's pledges
+  var pr = document.getElementById('pledgeRows');
+  if (pr) {
+    [['100 push-ups', '팔굽혀펴기 100개', true],
+     ['Read 20 pages', '20쪽 읽기', true],
+     ['Journal, one line', '기록지 한 줄', true],
+     ['30 min of piano', '피아노 30분', false],
+     ['No screens after 11', '11시 이후 화면 끄기', false]
+    ].forEach(function (it, i) {
+      var y = 104 + i * 30;
+      rect(pr, 70, y, 140, 24, '#231D18', 4);
+      var box = rect(pr, 77, y + 7, 10, 10, it[2] ? '#EDA63A' : 'none', 2);
+      if (!it[2]) box.setAttribute('stroke', '#3B3029');
+      label(pr, 94, y + 16, 8.5, it[2] ? '#EAE7DE' : '#979289', it[0], it[1]);
+    });
+  }
+
+  // mockup — activity calendar, six weeks
+  var mc = document.getElementById('miniCal');
+  if (mc) {
+    var pat = '222210222122201222212221022221222022210222';
+    for (var i2 = 0; i2 < 42; i2++) {
+      var v = pat.charCodeAt(i2) - 48;
+      rect(mc, (i2 % 14) * 10, Math.floor(i2 / 14) * 10, 8, 8,
+           v === 0 ? '#2D2520' : '#EDA63A', 1.5, v === 1 ? 0.4 : 1);
+    }
+  }
+
+  // bilingual toggle — run last so it also covers everything drawn above
+  var nodes = document.querySelectorAll('[data-ko]');
+  nodes.forEach(function (n) { n.setAttribute('data-en', n.innerHTML); });
+  var btn = document.getElementById('lang');
+  function apply() {
+    nodes.forEach(function (n) {
+      n.innerHTML = n.getAttribute(ko ? 'data-ko' : 'data-en');
+    });
+    document.documentElement.lang = ko ? 'ko' : 'en';
+    btn.textContent = ko ? 'English' : '한국어';
+  }
+  btn.addEventListener('click', function () {
+    ko = !ko;
+    try { localStorage.setItem('unveilCaseLang', ko ? 'ko' : 'en'); } catch (e) {}
+    apply();
+  });
+  try {
+    var saved = localStorage.getItem('unveilCaseLang');
+    if (saved) ko = saved === 'ko';
+    else ko = (navigator.language || '').slice(0, 2) === 'ko';
+  } catch (e) {}
+  if (ko) apply();
+})();
+</script>
+</body>
+</html>
