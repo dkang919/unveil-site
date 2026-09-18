@@ -289,9 +289,13 @@
       </ul>
     </div>
   </div>
-  <div class="cap" data-ko="IP는 저장하지 않는다. 악용 탐지가 필요해지면 7일마다 바뀌는 솔트 해시로만 하고, 분석 데이터와는 절대 조인하지 않는다. 설치 식별자는 첫 전송보다 <b>먼저</b> 만들어졌다 — 지울 수 있다고 방침에 쓰려면 지울 대상이 먼저 있어야 한다.">
-    IP is not stored. If abuse detection is ever needed it runs on a
-    seven-day rotating-salt hash, never joined to analytics. The install
+  <div class="cap" data-ko="IP는 <b>아무것도</b> 저장하지 않는다. 2026-09-18까지는 악용 탐지용으로 7일마다 바뀌는 솔트 해시를 남기고 <i>분석에 절대 조인하지 않는다</i>고 약속했는데, <b>그 약속을 집행하는 것이 주석뿐이었고 한 번도 쓰지 않았다.</b> 그래서 값을 통째로 없앴다 — 필요해지면 Cloud Run 요청 로그가 보존 기간 동안 갖고 있다. 설치 식별자는 첫 전송보다 <b>먼저</b> 만들어졌다 — 지울 수 있다고 방침에 쓰려면 지울 대상이 먼저 있어야 한다.">
+    <b>Nothing</b> about IP is stored. Until 2026-09-18 a seven-day
+    rotating-salt hash was kept for abuse detection with a promise that it was
+    <i>never joined to analytics</i> — and <b>the only thing enforcing that
+    promise was a comment, while the value was never once used.</b> So it was
+    removed outright; if abuse ever needs an answer, Cloud Run's own request
+    logs hold the IP for their retention window. The install
     identifier was built <b>before</b> the first transmission — you cannot
     promise deletion of something that does not exist yet.
   </div>
