@@ -249,10 +249,10 @@
 </p>
 <p data-ko="세 가지로 처리했다.">I handled it three ways.</p>
 <ol>
-  <li data-ko="<b>모드 3종, 기능은 완전히 동일하다.</b> Personal은 아무것도 보내지 않고, Core와 Full은 더 보낸다. 어느 것도 다른 모드에 없는 기능을 열어주지 않는다 — 기능과 교환된 동의는 GDPR 제7조 4항의 &lsquo;자유롭게 주어진&rsquo; 동의가 아니고, 애초에 그 구조가 이 제품이 거부하려고 존재하는 바로 그 압박이다.">
-    <b>Three modes, identical features.</b> Personal sends nothing; Core and Full
-    send more. None of them unlocks a feature the others lack — consent traded
-    for functionality is not <i>freely given</i> under GDPR Art. 7(4), and
+  <li data-ko="<b>모드 둘, 기능은 완전히 동일하다.</b> Personal은 아무것도 보내지 않고, Together는 행동의 형태를 보낸다. 어느 쪽도 다른 쪽에 없는 기능을 열어주지 않는다 — 기능과 교환된 동의는 GDPR 제7조 4항의 &lsquo;자유롭게 주어진&rsquo; 동의가 아니고, 애초에 그 구조가 이 제품이 거부하려고 존재하는 바로 그 압박이다.">
+    <b>Two modes, identical features.</b> Personal sends nothing; Together sends
+    the shape of behaviour. Neither unlocks a feature the other lacks — consent
+    traded for functionality is not <i>freely given</i> under GDPR Art. 7(4), and
     gating on it is precisely the coercion this product exists to reject.
   </li>
   <li data-ko="<b>형태만 나가고, 내용은 절대 나가지 않는다.</b> 아래가 그 경계 전부다.">
@@ -434,15 +434,17 @@
     <b>Flutter / Dart</b>, Riverpod, drift (SQLite), a self-built localization
     layer (Korean / English). Animation is CustomPaint plus Tickers.
   </li>
-  <li data-ko="<b>스키마 마이그레이션 15회, 파괴적인 것은 하나도 없다.</b> 스키마 v2 시절부터 같은 설치본으로 계속 도그푸딩해왔다 — 실기기에서 살아남지 못하는 마이그레이션은 마이그레이션이 아니다.">
-    <b>Fifteen schema migrations, none destructive.</b> The same install has been
+  <li data-ko="<b>스키마 22판, 사람이 만든 것을 잃는 마이그레이션은 하나도 없다.</b> 스키마 v2 시절부터 같은 설치본으로 계속 도그푸딩해왔다 — 실기기에서 살아남지 못하는 마이그레이션은 마이그레이션이 아니다.">
+    <b>Twenty-two schema versions, and no migration loses anything a person
+    made.</b> The same install has been
     dogfooded continuously since schema v2 — a migration that cannot survive a
     real device is not a migration.
   </li>
-  <li data-ko="도메인 로직(판정 · 벗김량 · 리듬 · 수집 계약)은 순수 함수로 분리돼 있고, 테스트가 걸린 층은 여기다. 84개 테스트가 규칙을 <b>정책이 아니라 코드로</b> 붙잡는다.">
+  <li data-ko="도메인 로직(판정 · 벗김량 · 리듬 · 수집 계약)은 순수 함수로 분리돼 있고, 테스트 대부분이 여기 걸려 있다. 440개가 넘는 테스트가 규칙을 <b>정책이 아니라 코드로</b> 붙잡는다 — 옛 모양의 DB를 실제로 세워서 올려보는 마이그레이션 테스트도 거기 있다.">
     Domain logic (verdicts, reveal amounts, rhythm, the consent contract) is
-    pure and is the layer under test. 84 tests hold the rules <b>in code rather
-    than in policy</b>.
+    pure and carries most of the tests. More than 440 of them hold the rules
+    <b>in code rather than in policy</b> — including migration tests that
+    build an old database shape and actually upgrade it.
   </li>
   <li data-ko="모든 변경마다: analyze → test → 릴리즈 빌드 → 실제로 실행. 빌드가 통과했다는 것만으로 &ldquo;돌아간다&rdquo;고 말하지 않는다.">
     Every change: analyze → test → release build → actually run it. A passing
